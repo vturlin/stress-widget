@@ -71,9 +71,35 @@ export function normalizeConfig(raw) {
       .slice(0, 24); // cap at 24 bars
   }
 
+  const validPositions = [
+    'bottom-right', 'bottom-left',
+    'center-right', 'center-left',
+    'top-right',    'top-left',
+  ];
+  const position = validPositions.includes(raw.position)
+    ? raw.position
+    : undefined;
+
+  const validTriggers = ['immediate', 'time', 'scroll', 'time_or_scroll'];
+  const triggerMode = validTriggers.includes(raw.triggerMode)
+    ? raw.triggerMode
+    : undefined;
+
+  const triggerDelaySec = Number.isFinite(raw.triggerDelaySec)
+    ? Math.max(0, Math.min(120, Math.round(raw.triggerDelaySec)))
+    : undefined;
+
+  const triggerScrollPercent = Number.isFinite(raw.triggerScrollPercent)
+    ? Math.max(5, Math.min(95, Math.round(raw.triggerScrollPercent)))
+    : undefined;
+
   return {
     _hotelId: raw._hotelId || null,
     variant: VARIANTS.includes(raw.variant) ? raw.variant : 'just-booked',
+    position,
+    triggerMode,
+    triggerDelaySec,
+    triggerScrollPercent,
 
     // Shared fields
     title: pick('title'),

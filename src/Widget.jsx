@@ -18,12 +18,70 @@
 
 import { useEffect, useRef, useMemo, useState } from 'react';
 
+// Position-aware fixed offsets. center-* uses translateY(-50%) on
+// the toast; the entry animation is opacity-only (`stress-fade-in`)
+// so there is no transform conflict at the centred positions.
+function positionStyle(position) {
+  switch (position) {
+    case 'top-left':
+      return { top: 24, left: 24 };
+    case 'top-right':
+      return { top: 24, right: 24 };
+    case 'center-left':
+      return { top: '50%', left: 24, transform: 'translateY(-50%)' };
+    case 'center-right':
+      return { top: '50%', right: 24, transform: 'translateY(-50%)' };
+    case 'bottom-right':
+      return { bottom: 24, right: 24 };
+    case 'bottom-left':
+    default:
+      return { bottom: 24, left: 24 };
+  }
+}
+
+// Visibility gate. 'immediate' (or undefined) renders straight
+// away; 'time' waits triggerDelaySec seconds; 'scroll' waits for
+// the user to scroll past triggerScrollPercent of the page;
+// 'time_or_scroll' fires on whichever trigger lands first.
+function useTriggeredVisibility(triggerMode, triggerDelaySec, triggerScrollPercent) {
+  const isImmediate = !triggerMode || triggerMode === 'immediate';
+  const [visible, setVisible] = useState(isImmediate);
+
+  useEffect(() => {
+    if (isImmediate || visible) return;
+    const fire = () => setVisible(true);
+    let timer;
+    let scrollHandler;
+
+    if (triggerMode === 'time' || triggerMode === 'time_or_scroll') {
+      const ms = Math.max(0, triggerDelaySec || 5) * 1000;
+      timer = setTimeout(fire, ms);
+    }
+    if (triggerMode === 'scroll' || triggerMode === 'time_or_scroll') {
+      const threshold = (triggerScrollPercent || 50) / 100;
+      scrollHandler = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        if (max <= 0) return;
+        if (window.scrollY / max >= threshold) fire();
+      };
+      window.addEventListener('scroll', scrollHandler, { passive: true });
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (scrollHandler) window.removeEventListener('scroll', scrollHandler);
+    };
+  }, [isImmediate, triggerMode, triggerDelaySec, triggerScrollPercent, visible]);
+
+  return visible;
+}
+
 // ── Shared keyframes ───────────────────────────────────────────────
 const STYLE_ID = 'stress-widget-keyframes';
 const STYLE_TEXT = `
-@keyframes stress-slide-in {
-  from { opacity: 0; transform: translateX(-16px) translateY(8px); }
-  to   { opacity: 1; transform: translateX(0) translateY(0); }
+@keyframes stress-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes stress-pulse {
   0%, 100% { opacity: 1; }
@@ -39,11 +97,16 @@ const STYLE_TEXT = `
 }
 
 /* Mobile (<= 480px): pin to bottom and stretch horizontally with a
-   small inset so the toast doesn't overflow narrow viewports. */
+   small inset so the toast doesn't overflow narrow viewports.
+   Resets corner anchoring + the centring transform to a single
+   bottom-aligned full-width sheet feel. */
 @media (max-width: 480px) {
   .stress-toast {
     left: 12px !important;
     right: 12px !important;
+    top: auto !important;
+    bottom: 12px !important;
+    transform: none !important;
     width: auto !important;
   }
 }
@@ -101,21 +164,31 @@ function DismissButton({ onClick }) {
   );
 }
 
+// Common toast chrome — position offsets are layered on top by each
+// variant via positionStyle(props.position). The entry animation is
+// opacity-only so it composes cleanly with the centring translateY
+// the wrapper applies for center-* positions.
 const BASE_TOAST_STYLE = {
   position: 'fixed',
-  left: 24,
-  bottom: 24,
   zIndex: 1000,
   width: 320,
   maxWidth: 'calc(100vw - 48px)',
   background: '#FFFFFF',
-  fontFamily: '"Open Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-  animation: 'stress-slide-in 420ms cubic-bezier(.2,.7,.3,1) both',
+  fontFamily:
+    '"Open Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+  animation: 'stress-fade-in 420ms cubic-bezier(.2,.7,.3,1) both',
 };
 
 // ── Dispatcher ─────────────────────────────────────────────────────
 
 export default function StressWidget(props) {
+  const visible = useTriggeredVisibility(
+    props.triggerMode,
+    props.triggerDelaySec,
+    props.triggerScrollPercent
+  );
+  if (!visible) return null;
+
   const v =
     props.variant === 'scarcity' || props.variant === 'social-proof'
       ? props.variant
@@ -138,6 +211,7 @@ function LiveBookingToast({
   avatarBg = '#FBCFE8',
   avatarFg = '#A41752',
   timeAgo = '2 minutes ago',
+  position = 'bottom-left',
   onDismiss,
 }) {
   const ref = useRef(null);
@@ -151,6 +225,7 @@ function LiveBookingToast({
       className="stress-toast"
       style={{
         ...BASE_TOAST_STYLE,
+        ...positionStyle(position),
         border: '1px solid #E7E5E4',
         borderRadius: 8,
         padding: '12px 14px',
@@ -274,6 +349,7 @@ function ScarcityToast({
   count = 2,
   unit = 'rooms',
   context = 'for your selected dates',
+  position = 'bottom-left',
   onDismiss,
 }) {
   const ref = useRef(null);
@@ -291,6 +367,7 @@ function ScarcityToast({
       className="stress-toast"
       style={{
         ...BASE_TOAST_STYLE,
+        ...positionStyle(position),
         borderRadius: 6,
         borderLeft: `3px solid ${accentColor}`,
         padding: '14px 16px',
@@ -391,6 +468,7 @@ function SocialProofToast({
   caption = 'Trending up vs. last week',
   accentColor = '#432975',
   bars = [3, 6, 4, 8, 5, 9, 7, 11, 8, 12],
+  position = 'bottom-left',
   onDismiss,
 }) {
   const ref = useRef(null);
@@ -413,6 +491,7 @@ function SocialProofToast({
       className="stress-toast"
       style={{
         ...BASE_TOAST_STYLE,
+        ...positionStyle(position),
         border: '1px solid #E7E5E4',
         borderRadius: 8,
         padding: '14px 16px',

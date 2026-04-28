@@ -53,6 +53,10 @@ async function mount() {
   root.render(
     <StressWidget
       variant={config.variant}
+      position={config.position}
+      triggerMode={config.triggerMode}
+      triggerDelaySec={config.triggerDelaySec}
+      triggerScrollPercent={config.triggerScrollPercent}
       title={config.title}
       accentColor={config.accentColor}
       // LiveBookingToast
