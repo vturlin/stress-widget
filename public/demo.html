@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stress Widget — demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Open Sans', system-ui, sans-serif;
+        background: linear-gradient(180deg, #f4efe8 0%, #e8dac4 100%);
+        min-height: 100vh;
+      }
+      .page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 80px 24px;
+      }
+      h1 {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 42px;
+        color: #3a2818;
+        margin: 0 0 12px;
+      }
+      p { color: #6b6558; line-height: 1.55; }
+      code {
+        background: #fff;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+      .picker {
+        display: inline-flex;
+        gap: 8px;
+        margin: 12px 0 24px;
+      }
+      .picker a {
+        padding: 6px 12px;
+        background: #fff;
+        border: 1px solid #d4c4a8;
+        border-radius: 4px;
+        text-decoration: none;
+        color: #3a2818;
+        font-size: 13px;
+      }
+      .picker a:hover { background: #f4efe8; }
+      .picker a.active { background: #3a2818; color: #fff; border-color: #3a2818; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Maison Lumière</h1>
+      <p>
+        Sample host page used to verify the stress-marketing toast looks
+        right against a typical hospitality background. Pick a variant
+        below to render it as a fixed bottom-left toast.
+      </p>
+
+      <div class="picker">
+        <a href="?v=just-booked"   id="link-just-booked">Just booked</a>
+        <a href="?v=scarcity"      id="link-scarcity">Scarcity</a>
+        <a href="?v=social-proof"  id="link-social-proof">Social proof</a>
+      </div>
+
+      <p>
+        Embed by adding
+        <code>&lt;script async src="./widget.js"&gt;&lt;/script&gt;</code> on
+        your page. Add <code>?id=YOUR_HOTEL_ID</code> to load a published
+        config from <code>configs/&lt;id&gt;.json</code>.
+      </p>
+    </div>
+
+    <script>
+      // Local demo: synthesize a config from the ?v= query param so the
+      // operator can A/B all three toasts without writing JSON files.
+      const v = new URLSearchParams(location.search).get('v') || 'just-booked';
+      const link = document.getElementById('link-' + v);
+      if (link) link.classList.add('active');
+
+      const demos = {
+        'just-booked': {
+          variant: 'just-booked',
+          title: 'Just booked',
+          accentColor: '#10B981',
+          guestName: 'Marie from Lyon',
+          roomName: 'Sea-View Suite',
+          initials: 'MD',
+          avatarBg: '#FBCFE8',
+          avatarFg: '#A41752',
+          timeAgo: '2 minutes ago',
+        },
+        'scarcity': {
+          variant: 'scarcity',
+          title: 'Almost gone',
+          accentColor: '#EF4444',
+          count: 2,
+          unit: 'rooms',
+          context: 'for your selected dates',
+        },
+        'social-proof': {
+          variant: 'social-proof',
+          title: '12 travelers',
+          subtitle: 'booked here today',
+          caption: 'Trending up vs. last week',
+          accentColor: '#432975',
+          bars: [3, 6, 4, 8, 5, 9, 7, 11, 8, 12],
+        },
+      };
+      window.STRESS_WIDGET_CONFIG = demos[v] || demos['just-booked'];
+    </script>
+
+    <script async src="./widget.js"></script>
+  </body>
+</html>
