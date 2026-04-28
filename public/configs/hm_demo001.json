@@ -1,0 +1,33 @@
+{
+  "hotelName": "Hotel Marquise",
+  "variant": "just-booked",
+  "title": "Just booked",
+  "accentColor": "#D97706",
+  "guestName": "Marie from Lyon",
+  "roomName": "Sea-View Suite",
+  "initials": "MD",
+  "avatarBg": "#FBCFE8",
+  "avatarFg": "#A41752",
+  "timeAgo": "2 minutes ago",
+  "count": 2,
+  "unit": "rooms",
+  "context": "for your selected dates",
+  "subtitle": "booked here today",
+  "caption": "Trending up vs. last week",
+  "bars": [
+    3,
+    6,
+    4,
+    8,
+    5,
+    9,
+    7,
+    11,
+    8,
+    12
+  ],
+  "position": "center-right",
+  "triggerMode": "time_or_scroll",
+  "triggerDelaySec": 8,
+  "triggerScrollPercent": 25
+}
